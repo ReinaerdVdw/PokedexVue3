@@ -1,5 +1,7 @@
+
 <script setup lang="ts">
 import {computed, ref, type Ref} from "vue";
+import '../style.css';
 import {IGetPokemonRequest} from "../api/types/IGetPokemonRequest";
 import useGetPokemon from "../api/queries/pokemon/getPokemon";
 const isCollapsed = ref(true);
@@ -25,6 +27,11 @@ function splitMovesIntoRows(moves : any) {
   }
   return rows;
 }
+
+const backgroundColor = computed(() => {
+  const type = pokemon.value?.types?.[0]?.type.name.toLowerCase();
+  return type ? colours[type] || '#FFFFFF' : '#FFFFFF';
+})
 
 // Colours object for background mapping
 const colours = {
@@ -55,25 +62,22 @@ function getPokemon() {
   errorMessage.value = "";
   showCard.value = true;
 }
-const formattedTypes = computed(() => {
-  return pokemon!.value.types.filter(Boolean).join(", ");
-});
+
 </script>
 
 <template>
   <div>
-    <input v-model="nameInput" placeholder="Enter Pokémon name"/>
+    <input v-model="nameInput" placeholder="Enter Pokémon name" />
     <button type="submit" @click="getPokemon()">Get Pokémon</button>
   </div>
   <div v-if="pokemon">
-    <div class="pokemon-card">
-      <img :src="pokemon?.sprites.front_default as string" alt="Pokemon image"/>
+    <div class="card" :style="{ backgroundColor: backgroundColor }">
+      <img :src="pokemon?.sprites.front_default as string" alt="Pokemon image" />
       <h2>{{ pokemon?.name }}</h2>
-      <p>ID: {{ pokemon?.id }}</p>
+      <p class="background-number">#{{ pokemon?.id }}</p>
       <p>HP: {{ pokemon?.stats[0].base_stat }}</p>
-      <p>Abilities: {{ pokemon?.abilities }}</p>
-      <p>First Moves: {{ pokemon?.moves[0] }}, {{ pokemon?.moves[1] }}</p>
-      <p>Types: {{ formattedTypes }}</p>
+      <p>Abilities: {{ pokemon?.abilities.map(a => a.ability.name).join(', ') }}</p>
+      <p>Types: {{ pokemon?.types.map(t => t.type.name).join(', ') }}</p>
 
       <button @click="toggleCollapse">
         {{ isCollapsed ? "Show All Moves" : "Hide All Moves" }}
@@ -81,7 +85,7 @@ const formattedTypes = computed(() => {
 
       <div v-if="!isCollapsed">
         <h3>Moves:</h3>
-        <div v-for="(row, index) in splitMovesIntoRows(pokemon?.moves)" :key="index">
+        <div v-for="(row, index) in splitMovesIntoRows(pokemon?.moves.map(m => m.move.name))" :key="index">
           <p>{{ row.join(", ") }}</p>
         </div>
       </div>
@@ -89,3 +93,5 @@ const formattedTypes = computed(() => {
   </div>
   <p v-if="errorMessage">{{ errorMessage }}</p>
 </template>
+
+
